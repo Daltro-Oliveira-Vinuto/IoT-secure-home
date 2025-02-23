@@ -27,6 +27,7 @@ typedef struct {
     uint gpio;            // GPIO pin connected to the buzzer
     float clock_divisor;  // PWM clock divisor value
     float wrap;           // PWM wrap value
+    bool enabled;         // PWM enabled value
 } Buzzer;
 
 // Function to configure and activate the buzzer
@@ -39,15 +40,17 @@ void set_buzzer(Buzzer *buzzer) {
 
     // Configure PWM settings
     buzzer->clock_divisor = 125.0;  
-    buzzer->wrap = (125000000 / (buzzer->clock_divisor * buzzer->frequency)) - 1;  
+    if (buzzer->clock_divisor != 0 && buzzer->frequency != 0) {
+      buzzer->wrap = (125000000 / (buzzer->clock_divisor * buzzer->frequency)) - 1;
 
-    pwm_set_clkdiv(pwm_slice, buzzer->clock_divisor); // Set PWM clock divisor
-    pwm_set_wrap(pwm_slice, buzzer->wrap);           // Set PWM wrap value
-    pwm_set_enabled(pwm_slice, true);                // Enable PWM output
+      pwm_set_clkdiv(pwm_slice, buzzer->clock_divisor); // Set PWM clock divisor
+      pwm_set_wrap(pwm_slice, buzzer->wrap);           // Set PWM wrap value
+      pwm_set_enabled(pwm_slice, buzzer->enabled);                // Enable PWM output
 
-    // Set PWM duty cycle
-    pwm_level = (buzzer->duty_cycle / 100.0) * buzzer->wrap;
-    pwm_set_gpio_level(buzzer->gpio, pwm_level);
+      // Set PWM duty cycle
+      pwm_level = (buzzer->duty_cycle / 100.0) * buzzer->wrap;
+      pwm_set_gpio_level(buzzer->gpio, pwm_level);
+    }
 }
 
 // Function to initialize GPIO pins
@@ -98,13 +101,16 @@ int main() {
             if (gpio_get(PIR_SENSOR_PIN)) { // Motion detected
                 printf("Motion Detected!\n");
                 gpio_put(LED_PIN_RED, 1); // Turn red LED ON
-                buzzer0.frequency = 2000;  // Set buzzer frequency
+                buzzer0.enabled = true; // turn on buzzer
+                buzzer0.frequency = 1000; 
                 set_buzzer(&buzzer0);
                 sleep_ms(2000);
-                buzzer0.frequency = 0; // Turn off buzzer
+                buzzer0.enabled = false; // Turn off buzzer
                 set_buzzer(&buzzer0);
             } else {
                 gpio_put(LED_PIN_RED, 0); // Turn red LED OFF
+                buzzer0.enabled = false; // Turn off buzzer
+                set_buzzer(&buzzer0);
             }
 
             // Check flame sensor
@@ -112,18 +118,21 @@ int main() {
                 printf("Flame Detected!\n");
                 gpio_put(LED_PIN_GREEN, 1); // Turn green LED ON
                 buzzer0.frequency = 10000; // Set buzzer frequency
+                buzzer0.enabled = true; // turn on buzzer
                 set_buzzer(&buzzer0);
                 sleep_ms(2000);
-                buzzer0.frequency = 0; // turn off buzzer
+                buzzer0.enabled = false; // turn off buzzer
                 set_buzzer(&buzzer0);
             } else {
                 gpio_put(LED_PIN_GREEN, 0); // Turn green LED OFF
+                buzzer0.enabled = false; // Turn off buzzer
+                set_buzzer(&buzzer0);
             }
             sleep_ms(500); // Small delay before next sensor check
         } else { // System is off
             gpio_put(LED_PIN_RED, OFF);
             gpio_put(LED_PIN_GREEN, OFF);
-            buzzer0.frequency = 0; // Turn off buzzer
+            buzzer0.enabled = false; // Turn off buzzer
             set_buzzer(&buzzer0);
         }
 
@@ -143,7 +152,7 @@ int main() {
             gpio_put(LED_PIN_GREEN, OFF); // Turn off green LED
             gpio_put(LED_PIN_RED, OFF); // Turn off red LED
             sleep_ms(100); // Debounce delay
-            buzzer0.frequency = 0; // Turn off buzzer
+            buzzer0.enabled = false; // Turn off buzzer
             set_buzzer(&buzzer0);
         }
     }
