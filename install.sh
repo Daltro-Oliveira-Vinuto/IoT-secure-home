@@ -2,7 +2,9 @@
 
 cd /home/$USER/Downloads
 git clone https://github.com/raspberrypi/pico-sdk.git
+cd ./pico-sdk
 sudo git submodule update --init
+cd ..
 export PICO_SDK_PATH=/home/$USER/Downloads/pico-sdk
 export PICO_BOARD=pico_w
 
