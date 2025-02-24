@@ -1,4 +1,5 @@
 <ol>
+  <li>Obs.: O projeto foi testado no sistema operacional Linux </li>
   <li>Primeiramente retire e recoloque o cabo USB do Raspberry Pi Pico w enquanto segura a tecla bootsel.</li>
   <li>Faça o download do arquivo install.sh</li>
   <li>Após isso execute o seguinte procedimento:
